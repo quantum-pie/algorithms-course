@@ -1,3 +1,6 @@
+from statistics import median
+
+
 class TreeNode:
     """
     Binary tree node.
@@ -18,6 +21,9 @@ class BinarySearchTree:
         """
         Inserts new tuple (a, d) to the tree
         Note that tuples by default are compared item by item: by a first and then by d
+        :param a: New sequence value
+        :param d: Corresponding maximum length of subsequence that ends up in a
+        :return: Nothing
         """
         new_node = TreeNode(a, d)                           # create new node
         if self.root:                                       # check if root exists
@@ -42,8 +48,8 @@ class BinarySearchTree:
         """
         Function to calculate maximum length of subsequence
         that ends up in node with a >= value
-        :param value:
-        :return:
+        :param value: Value of subsequence lower bound
+        :return: Maximum length of subsequnece than can be concatenated with value
         """
         current_node = self.root                            # assign initial current node
         maximum = 0                                         # assign initial maximum length d
@@ -65,8 +71,8 @@ class BinarySearchTree:
     def update_root(self, d):
         """
         Update root d when available
-        :param d:
-        :return:
+        :param d: Maximum length of subsequence that ends up in sequence median
+        :return: Nothing
         """
         self.root[1] = d
 
@@ -74,22 +80,19 @@ class BinarySearchTree:
 n = int(input())
 array = list(map(int, input().split()))
 
-sorted_array = sorted(array)                # sort input - n*log(n)
-median = sorted_array[n // 2]               # calculate median to build balanced tree
+arr_median = median(array)                  # calculate median to build balanced tree - O(n)
 
 binary_tree = BinarySearchTree()
-binary_tree.insert(median)                  # push median as root with default d (0)
+binary_tree.insert(median)                  # push median as root with default d
 
 lengths = [0] * n
 
-for val in array:                                   # n
-    new_len = binary_tree.search_maximum(val) + 1   # log(n)
+for val in array:                                       # O(n)
+    new_len = binary_tree.search_maximum(val) + 1       # O(log(n)) - because tree is balanced
     if val == median and binary_tree.root[1] == 0:
         binary_tree.update_root(new_len)
     else:
-        binary_tree.insert(val, new_len)                # log(n)
+        binary_tree.insert(val, new_len)                # O(log(n)) - same reason
 
-ans = max(0, *lengths)
-print(ans)
 
 
