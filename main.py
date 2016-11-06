@@ -1,10 +1,10 @@
-import bisect
-import random
+from bisect import bisect
+from random import randint
 
 SIZE = 100                                                                  # size of input array
 MIN_VAL, MAX_VAL = 0, 1000                                                  # bounds of input array
 
-array = [random.randint(0, 1000) for i in range(SIZE)]                      # construct random input array
+array = [randint(0, 1000) for i in range(SIZE)]                             # construct random input array
 
 print(*array)
 
@@ -20,7 +20,7 @@ d_max_idx = SIZE                                                            # in
 
 for i in range(SIZE):                                                       # for all elements in input order
     pos = new_positions[i]                                                  # get position of input element in sorted array
-    d = bisect.bisect_right(d_array, pos, 0, d_len)                         # bisect d_array to find most suitable index for value placing
+    d = bisect_right(d_array, pos, 0, d_len)                                # bisect d_array to find most suitable index for value placing
                                                                             # this operation searching maximum d in aux_array that is by the left side of current value
 
     aux_array[pos] = 1 + d                                                  # update current maximum length
