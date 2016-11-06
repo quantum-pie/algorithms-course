@@ -1,98 +1,47 @@
-from statistics import median
+import bisect
+import random
 
+SIZE = 100                                                                  # size of input array
+MIN_VAL, MAX_VAL = 0, 1000                                                  # bounds of input array
 
-class TreeNode:
-    """
-    Binary tree node.
-    Note that node value is tuple (a, d), where a is sequnece value,
-    and d is maximum length of subsequence that ends up in a
-    """
-    def __init__(self, *value):
-        self.value = value
-        self.left = None
-        self.right = None
+array = [random.randint(0, 1000) for i in range(SIZE)]                      # construct random input array
 
+print(*array)
 
-class BinarySearchTree:
-    def __init__(self):
-        self.root = None
+sorted_idx = sorted(range(SIZE), key=lambda x: array[x], reverse=True)      # indices of input array in sorted array
+new_positions = sorted(range(SIZE), key=lambda x: sorted_idx[x])            # new positions of input array elements in sorted array
 
-    def insert(self, a, d=0):
-        """
-        Inserts new tuple (a, d) to the tree
-        Note that tuples by default are compared item by item: by a first and then by d
-        :param a: New sequence value
-        :param d: Corresponding maximum length of subsequence that ends up in a
-        :return: Nothing
-        """
-        new_node = TreeNode(a, d)                           # create new node
-        if self.root:                                       # check if root exists
-            current_node = self.root                        # assign initial current node
-            while True:
-                if new_node.value <= current_node.value:
-                    if current_node.left:
-                        current_node = current_node.left    # iterate over left subtree
-                    else:
-                        current_node.left = new_node        # stop iteration
-                        break
-                else:
-                    if current_node.right:                  # iterate over right subtree
-                        current_node = current_node.right
-                    else:
-                        current_node.right = new_node       # stop iteration
-                        break
+aux_array = [0] * (SIZE + 1)                                                # auxiliary array for maximum lengths of sequences that ends up in every input element (sorted by input elements)
+d_array = [0] * SIZE                                                        # array of input elements indexed by maximum lengths of sequences that ends up in them
+d_len = 0                                                                   # current length of d_array
+
+d_max = 0                                                                   # total maximum length of sequence
+d_max_idx = SIZE                                                            # index of d_max in aux_array
+
+for i in range(SIZE):                                                       # for all elements in input order
+    pos = new_positions[i]                                                  # get position of input element in sorted array
+    d = bisect.bisect_right(d_array, pos, 0, d_len)                         # bisect d_array to find most suitable index for value placing
+                                                                            # this operation searching maximum d in aux_array that is by the left side of current value
+
+    aux_array[pos] = 1 + d                                                  # update current maximum length
+    d_array[d] = pos                                                        # update d_array
+    d_len = max(d_len, aux_array[pos])                                      # update length of d_array
+
+    if aux_array[pos] > d_max:                                              # update total maximum
+        d_max = aux_array[pos]
+        d_max_idx = pos
+
+print(d_max)
+
+idx_arr = [sorted_idx[d_max_idx] + 1]
+k = d_max - 1
+
+for i in range(d_max_idx - 1, -1, -1):                                      # this procedure restores maximum length sequence indices using aux_array and d_max
+    if aux_array[i] == k:
+        idx_arr.append(sorted_idx[i] + 1)
+        if k == 1:
+            break
         else:
-            self.root = new_node                            # create root
+            k -= 1
 
-    def search_maximum(self, value):
-        """
-        Function to calculate maximum length of subsequence
-        that ends up in node with a >= value
-        :param value: Value of subsequence lower bound
-        :return: Maximum length of subsequnece than can be concatenated with value
-        """
-        current_node = self.root                            # assign initial current node
-        maximum = 0                                         # assign initial maximum length d
-        while True:
-            if value <= current_node.value[0]:              # this node is 'good' i.e. a is >= value
-                if current_node.value[1] > maximum:         # so check maximum length
-                    maximum = current_node.value[0]
-                if current_node.left:                       # and iterate further over the left subtree
-                    current_node = current_node.left
-                else:
-                    break
-            else:                                           # 'bad' node
-                if current_node.right:
-                    current_node = current_node.right       # just iterate further
-                else:
-                    break
-        return maximum
-
-    def update_root(self, d):
-        """
-        Update root d when available
-        :param d: Maximum length of subsequence that ends up in sequence median
-        :return: Nothing
-        """
-        self.root[1] = d
-
-
-n = int(input())
-array = list(map(int, input().split()))
-
-arr_median = median(array)                  # calculate median to build balanced tree - O(n)
-
-binary_tree = BinarySearchTree()
-binary_tree.insert(median)                  # push median as root with default d
-
-lengths = [0] * n
-
-for val in array:                                       # O(n)
-    new_len = binary_tree.search_maximum(val) + 1       # O(log(n)) - because tree is balanced
-    if val == median and binary_tree.root[1] == 0:
-        binary_tree.update_root(new_len)
-    else:
-        binary_tree.insert(val, new_len)                # O(log(n)) - same reason
-
-
-
+print(*idx_arr[::-1])
