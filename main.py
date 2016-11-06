@@ -1,4 +1,4 @@
-from bisect import bisect
+from bisect import bisect_right
 from random import randint
 
 SIZE = 100                                                                  # size of input array
