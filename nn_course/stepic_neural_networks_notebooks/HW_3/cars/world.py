@@ -26,13 +26,13 @@ class World(metaclass=ABCMeta):
 
 
 class SimpleCarWorld(World):
-    COLLISION_PENALTY =  # выберите сами
-    HEADING_REWARD =  # выберите сами
-    WRONG_HEADING_PENALTY =  # выберите сами
-    IDLENESS_PENALTY =  # выберите сами
-    SPEEDING_PENALTY =  # выберите сами
-    MIN_SPEED =  # выберите сами
-    MAX_SPEED =  # выберите сами
+    COLLISION_PENALTY = 30 * 1e0
+    HEADING_REWARD = -70 * 1e-1
+    WRONG_HEADING_PENALTY = -100 * 1e-1
+    IDLENESS_PENALTY = 32 * 1e-1
+    SPEEDING_PENALTY = 32 * 1e-1
+    MIN_SPEED = 0.1 * 1e0
+    MAX_SPEED = 0.7 * 1e0
 
     size = (800, 600)
 
