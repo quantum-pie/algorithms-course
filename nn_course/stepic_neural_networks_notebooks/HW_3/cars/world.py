@@ -26,9 +26,9 @@ class World(metaclass=ABCMeta):
 
 
 class SimpleCarWorld(World):
-    COLLISION_PENALTY = 30 * 1e0
-    HEADING_REWARD = -70 * 1e-1
-    WRONG_HEADING_PENALTY = -100 * 1e-1
+    COLLISION_PENALTY = 32 * 1e0
+    HEADING_REWARD = 32 * 1e-1
+    WRONG_HEADING_PENALTY = 32 * 1e-1
     IDLENESS_PENALTY = 32 * 1e-1
     SPEEDING_PENALTY = 32 * 1e-1
     MIN_SPEED = 0.1 * 1e0
@@ -104,7 +104,7 @@ class SimpleCarWorld(World):
         :param collision: произошло ли столкновение со стеной на прошлом шаге
         :return reward: награду агента (возможно, отрицательную)
         """
-        a = np.sin(angle(-state.position, state.heading))
+        a = -np.sin(angle(-state.position, state.heading))
         heading_reward = 1 if a > 0.1 else a if a > 0 else 0
         heading_penalty = a if a <= 0 else 0
         idle_penalty = 0 if abs(state.velocity) > self.MIN_SPEED else -self.IDLENESS_PENALTY
@@ -140,7 +140,7 @@ class SimpleCarWorld(World):
             self.visualize(scale)
             if self._update_display() == pygame.QUIT:
                 break
-            sleep(0.1)
+            #sleep(0.1)
 
         for i, agent in enumerate(self.agents):
             try:
@@ -177,7 +177,7 @@ class SimpleCarWorld(World):
                 self.visualize(scale)
                 if self._update_display() == pygame.QUIT:
                     break
-                sleep(0.05)
+                #sleep(0.05)
 
         return np.mean(rewards)
 

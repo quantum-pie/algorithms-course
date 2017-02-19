@@ -7,6 +7,8 @@ import numpy as np
 from cars.utils import Action
 from learning_algorithms.network import Network
 
+from matplotlib import pyplot
+
 
 class Agent(metaclass=ABCMeta):
     @property
@@ -30,7 +32,7 @@ class SimpleCarAgent(Agent):
         :param history_data: количество хранимых нами данных о результатах предыдущих шагов
         """
         self.evaluate_mode = False  # этот агент учится или экзаменутеся? если учится, то False
-        self._rays = 10 # выберите число лучей ладара; например, 5
+        self._rays = 5 # выберите число лучей ладара; например, 5
         # here +2 is for 2 inputs from elements of Action that we are trying to predict
         self.neural_net = Network([self.rays + 4,
                                    # внутренние слои сети: выберите, сколько и в каком соотношении вам нужно
@@ -40,6 +42,13 @@ class SimpleCarAgent(Agent):
         self.sensor_data_history = deque([], maxlen=history_data)
         self.chosen_actions_history = deque([], maxlen=history_data)
         self.reward_history = deque([], maxlen=history_data)
+
+        self.test_set_len = 500
+
+        # тренировочная и тестовая ошибки
+        self.train_cost = []
+        self.test_cost = []
+
         self.step = 0
 
     @classmethod
@@ -112,6 +121,7 @@ class SimpleCarAgent(Agent):
         highest_reward = max(rewards)
         best_action = rewards_to_controls_map[highest_reward]
 
+
         # Добавим случайности, дух авантюризма. Иногда выбираем совершенно
         # рандомное действие
         #if (not self.evaluate_mode) and (random.random() < 0.05):
@@ -130,7 +140,7 @@ class SimpleCarAgent(Agent):
 
         return best_action
 
-    def receive_feedback(self, reward, train_every=50, reward_depth=7):
+    def receive_feedback(self, reward, train_every=100, reward_depth=7):
         """
         Получить реакцию на последнее решение, принятое сетью, и проанализировать его
         :param reward: оценка внешним миром наших действий
@@ -155,8 +165,32 @@ class SimpleCarAgent(Agent):
         # прежде чем собирать новые данные
         # (проверьте, что вы в принципе храните достаточно данных (параметр `history_data` в `__init__`),
         # чтобы условие len(self.reward_history) >= train_every выполнялось
-        if not self.evaluate_mode and (len(self.reward_history) >= train_every) and not (self.step % train_every):
-            X_train = np.concatenate([self.sensor_data_history, self.chosen_actions_history], axis=1)
-            y_train = self.reward_history
+        if not self.evaluate_mode and (len(self.reward_history) >= train_every + self.test_set_len) and not (self.step % train_every):
+            X = np.concatenate([self.sensor_data_history, self.chosen_actions_history], axis=1)
+            y = self.reward_history
+
+            X_test, X_train = np.split(X, [self.test_set_len], axis=0)
+            y_test, y_train = np.split(self.reward_history, [self.test_set_len], axis=0)
+
             train_data = [(x[:, np.newaxis], y) for x, y in zip(X_train, y_train)]
-            self.neural_net.SGD(training_data=train_data, epochs=15, mini_batch_size=train_every, eta=0.05)
+            self.neural_net.SGD(training_data=train_data, epochs=15, mini_batch_size=train_every, eta=0.15)
+
+            # диагностика обучения: кривые обучения
+            # тестовая ошибка обучения:
+            test_reward = [float(self.neural_net.feedforward(x[:, np.newaxis])) for x in X_test]
+            test_error = [x - y for x, y in zip(y_test, test_reward)]
+            test_error = np.asarray(test_error)[:, np.newaxis]
+            self.test_cost.append(test_error.T.dot(test_error)[0, 0] / len(test_error))
+
+            # тренировочная ошибка обучения
+            train_reward = [float(self.neural_net.feedforward(x[:, np.newaxis])) for x in X_train]
+            train_error = [x - y for x, y in zip(y_train, train_reward)]
+            train_error = np.asarray(train_error)[:, np.newaxis]
+            self.train_cost.append(train_error.T.dot(train_error)[0, 0] / len(train_error))
+
+            if len(self.reward_history) >= 5 * self.test_set_len:
+                pyplot.plot(range(len(self.test_cost)), self.test_cost, 'r')
+                pyplot.plot(range(len(self.train_cost)), self.train_cost, 'b')
+                pyplot.show()
+
+
